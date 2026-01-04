@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <properties resource="database.properties"/>
+
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <setting name="cacheEnabled" value="true"/>
+        <!-- 开启自动映射 -->
+        <setting name="autoMappingBehavior" value="FULL"/>
+    </settings>
+
+    <typeAliases>
+        <package name="nxu.entity"/>
+    </typeAliases>
+
+    <!-- 配置PageHelper拦截器 -->
+    <plugins>
+        <plugin interceptor="com.github.pagehelper.PageInterceptor">
+            <property name="helperDialect" value="mysql"/>
+            <property name="reasonable" value="true"/>
+            <property name="supportMethodsArguments" value="true"/>
+            <property name="params" value="count=countSql"/>
+        </plugin>
+    </plugins>
+
+    <!-- 注意：当使用Spring整合MyBatis时，environments配置可以省略，数据源由Spring管理 -->
+    <!-- 如果resources目录下存放xml文件的 包路径 和 java目录下存放dao接口的 包路径 相同的话，可以使用package来配置 -->
+    <!-- 或者使用MapperScannerConfigurer自动扫描，mapper文件通过mapperLocations配置 -->
+
+</configuration>

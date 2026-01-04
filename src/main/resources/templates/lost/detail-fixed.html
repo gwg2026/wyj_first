@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失物详情</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .detail-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .detail-image { width: 100%; max-width: 600px; border-radius: 10px; margin: 20px 0; cursor: pointer; transition: all 0.3s ease; }
+        .detail-image:hover { filter: brightness(1.05); transform: scale(1.01); }
+        .detail-info { margin: 15px 0; }
+        .detail-label { font-weight: bold; color: #666; width: 100px; display: inline-block; }
+        .detail-value { color: #333; }
+        .type-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-right: 10px; color: white; }
+        .type-lost { background: #ff6b6b; }
+        .type-found { background: #4ecdc4; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; }
+        .status-found { background: #51cf66; }
+        .status-lost { background: #ffd43b; color: #333; }
+        .contact-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .actions { margin-top: 30px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #51cf66; color: white; }
+        .btn-danger { background: #ff6b6b; color: white; }
+        .btn-warning { background: #ffd43b; color: #333; }
+        .btn-info { background: #74c0fc; color: white; }
+        .related-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+        .image-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .image-container {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            border-radius: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/navbar :: navbar" th:with="activePage='list'"></div>
+    <div class="container">
+        <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h2>失物详情</h2>
+        </div>
+
+    <div class="container" th:if="${item != null}">
+        <div class="detail-card">
+            <div class="detail-title">
+                <span th:text="${item.title}"></span>
+                <span class="type-badge" th:classappend="${item.type == 1 ? 'type-lost' : 'type-found'}"
+                      th:text="${item.type == 1 ? '失物' : '拾物'}"></span>
+                <span class="status-badge" th:classappend="${item.status == 1 ? 'status-found' : 'status-lost'}"
+                      th:text="${item.status == 1 ? '已找到' : '未找到'}"></span>
+            </div>
+
+            <div th:if="${item.imageUrl != null}" class="image-container">
+                <img th:src="@{${item.imageUrl}}" class="detail-image" alt="图片" th:data-item-id="${item.id}"
+                     onerror="handleImageError(this)" onclick="showImageOverlay(this.src, this.alt)">
+                <div class="image-placeholder" style="display: none;" onclick="showImageOverlay(this.previousElementSibling.src, this.previousElementSibling.alt)">
+                    <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #ddd;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                        <div style="color: #666;">图片加载失败</div>
+                        <div style="color: #999; font-size: 14px; margin-top: 5px;">点击查看详情</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">分类：</span>
+                <span class="detail-value" th:text="${item.category != null ? item.category.name : '未分类'}"></span>
+            </div>
+            
+            <div class="detail-info" th:if="${item.lostLocation != null}">
+                <span class="detail-label">地点：</span>
+                <span class="detail-value" th:text="${item.lostLocation}"></span>
+            </div>
+            
+            <div class="detail-info" th:if="${item.lostTime != null}">
+                <span class="detail-label">时间：</span>
+                <span class="detail-value" th:text="${#dates.format(item.lostTime, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">描述：</span>
+                <div class="detail-value" style="white-space: pre-wrap;" th:text="${item.description}"></div>
+            </div>
+            
+            <div class="contact-info">
+                <h3 style="margin-bottom: 15px;">联系方式</h3>
+                <div class="detail-info" th:if="${item.user.phone != null}">
+                    <span class="detail-label">电话：</span>
+                    <span class="detail-value" th:text="${item.user.phone}"></span>
+                </div>
+                <div class="detail-info" th:if="${item.user.qq != null}">
+                    <span class="detail-label">QQ：</span>
+                    <span class="detail-value" th:text="${item.user.qq}"></span>
+                </div>
+                <div class="detail-info" th:if="${item.user.wechat != null}">
+                    <span class="detail-label">微信：</span>
+                    <span class="detail-value" th:text="${item.user.wechat}"></span>
+                </div>
+                <div class="detail-info" th:if="${item.user.email != null}">
+                    <span class="detail-label">邮箱：</span>
+                    <span class="detail-value" th:text="${item.user.email}"></span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">发布者：</span>
+                    <span class="detail-value" th:text="${item.user.realName}"></span>
+                    <span th:if="${item.user.studentNo != null}">（<span th:text="${item.user.studentNo}"></span>）</span>
+                </div>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">发布时间：</span>
+                <span class="detail-value" th:text="${#dates.format(item.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                <span style="margin-left: 20px;">浏览次数：<span th:text="${item.viewCount}"></span></span>
+            </div>
+            
+            <div class="actions" th:if="${session.user != null and session.user.id == item.userId}">
+                <button class="btn btn-success" th:if="${item.status == 0}" onclick="updateStatus(getItemId(), 1)">标记为已找到</button>
+                <button class="btn btn-danger" onclick="deleteItem(getItemId())">删除</button>
+            </div>
+            
+            <div class="actions" th:if="${session.user != null}">
+                <button class="btn btn-primary" onclick="toggleFavorite()">
+                    <span id="favorite-text">⭐ 收藏</span>
+                </button>
+            </div>
+            
+            <div class="actions" th:if="${item.imageUrl != null}">
+                <button class="btn btn-info" onclick="downloadImage()">下载图片</button>
+            </div>
+            
+            <div class="actions" th:if="${session.user != null and session.user.id != item.userId}">
+                <button class="btn btn-warning" onclick="reportItem()">举报</button>
+            </div>
+            
+            <div class="related-items" th:if="${relatedItems != null and relatedItems.size() > 0}" style="margin-top: 30px;">
+                <h3>相关失物</h3>
+                <div th:each="related : ${relatedItems}" class="related-item" 
+                     th:onclick="|window.location.href='/lost/detail/${related.id}'|"
+                     style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 10px 0; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-weight: bold; margin-bottom: 5px;" th:text="${related.title}"></div>
+                    <div style="color: #666; font-size: 12px;">
+                        <span th:text="${related.type == 1 ? '失物' : '拾物'}"></span> • 
+                        <span th:text="${#dates.format(related.createTime, 'MM-dd HH:mm')}"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 评论区域 -->
+            <div class="comments-container comment-section">
+                <h3>评论</h3>
+                
+                <div class="comment-form" th:if="${session.user != null}" style="margin: 20px 0;">
+                    <textarea id="comment-content" placeholder="写下你的评论..." 
+                              style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                    <button class="btn btn-primary" onclick="submitComment()" style="margin-top: 10px;">发表评论</button>
+                </div>
+                
+                <div class="comment-login" th:if="${session.user == null}" style="margin: 20px 0; text-align: center; color: #666;">
+                    <p>请<a th:href="@{/user/login}" style="color: #667eea;">登录</a>后发表评论</p>
+                </div>
+                
+                <div class="comments-list" id="comments-list">
+                    <div style="text-align: center; color: #999; padding: 20px;">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" th:if="${item == null}">
+        <div class="empty-state">
+            <h2>失物不存在</h2>
+            <p>该失物可能已被删除或不存在</p>
+            <a th:href="@{/lost/list}" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">返回列表</a>
+        </div>
+    </div>
+
+    <button class="scroll-top" onclick="scrollToTop()" id="scroll-top">↑</button>
+    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+
+    <script>
+        // 获取itemId的函数，支持动态获取
+        function getItemId() {
+            // 尝试从data属性获取
+            const element = document.querySelector('[data-item-id]');
+            if (element) {
+                return element.getAttribute('data-item-id');
+            }
+            // 如果没有找到，返回默认值（用于静态测试）
+            return '1';
+        }
+        
+        // 状态管理对象
+        const StateManager = {
+            // 从localStorage加载状态
+            load: function() {
+                try {
+                    const savedState = localStorage.getItem('lost_detail_state_' + getItemId());
+                    if (savedState) {
+                        return JSON.parse(savedState);
+                    }
+                } catch (e) {
+                    console.error('Error loading state:', e);
+                }
+                return {};
+            },
+            
+            // 保存状态到localStorage
+            save: function(state) {
+                try {
+                    localStorage.setItem('lost_detail_state_' + getItemId(), JSON.stringify(state));
+                } catch (e) {
+                    console.error('Error saving state:', e);
+                }
+            },
+            
+            // 获取评论状态
+            getCommentsState: function() {
+                const state = this.load();
+                return state.comments || { lastScrollPosition: 0, expandedComments: {} };
+            },
+            
+            // 保存评论状态
+            saveCommentsState: function(commentsState) {
+                const state = this.load();
+                state.comments = commentsState;
+                this.save(state);
+            },
+            
+            // 获取用户偏好设置
+            getUserPreferences: function() {
+                const state = this.load();
+                return state.preferences || { 
+                    autoLoadComments: true, 
+                    commentSortOrder: 'desc',
+                    showTimestamps: true 
+                };
+            },
+            
+            // 保存用户偏好设置
+            saveUserPreferences: function(preferences) {
+                const state = this.load();
+                state.preferences = preferences;
+                this.save(state);
+            }
+        };
+        
+        // 图片放大功能
+        function initImageEnlargement() {
+            const detailImage = document.querySelector('.detail-image');
+            if (!detailImage) return;
+            
+            detailImage.addEventListener('click', function() {
+                showImageOverlay(this.src, this.alt);
+            });
+        }
+        
+        function showImageOverlay(imageSrc, imageAlt) {
+            const overlay = document.createElement('div');
+            overlay.className = 'image-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease-in;
+            `;
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container';
+            imgContainer.style.cssText = `
+                position: relative;
+                max-width: 95vw;
+                max-height: 95vh;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            img.alt = imageAlt;
+            img.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                display: block;
+                border-radius: 8px;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '×';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: -40px;
+                right: 0;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+                transition: all 0.2s ease;
+            `;
+            
+            closeBtn.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(255,255,255,0.3)';
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            closeBtn.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255,255,255,0.2)';
+                this.style.transform = 'scale(1)';
+            });
+            
+            closeBtn.onclick = function() {
+                overlay.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                }, 300);
+            };
+            
+            const imgInfo = document.createElement('div');
+            imgInfo.style.cssText = `
+                position: absolute;
+                bottom: -40px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: white;
+                font-size: 14px;
+                text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            `;
+            
+            imgInfo.innerHTML = `
+                <div>点击图片外区域或按 ESC 键关闭</div>
+            `;
+            
+            // 添加鼠标滚轮缩放功能
+            let scale = 1;
+            img.style.transform = `scale(${scale})`;
+            
+            overlay.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    // 放大
+                    scale = Math.min(scale + 0.1, 3);
+                } else {
+                    // 缩小
+                    scale = Math.max(scale - 0.1, 0.5);
+                }
+                img.style.transform = `scale(${scale})`;
+            });
+            
+            // 添加键盘事件
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeBtn.onclick();
+                }
+            });
+            
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(closeBtn);
+            imgContainer.appendChild(imgInfo);
+            overlay.appendChild(imgContainer);
+            document.body.appendChild(overlay);
+            
+            // 点击图片外部关闭
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeBtn.onclick();
+                }
+            });
+        }
+        
+        // 图片悬停预览功能
+        function initImageHoverPreview() {
+            const detailImage = document.querySelector('.detail-image');
+            if (!detailImage) return;
+            
+            let previewOverlay = null;
+            let isMouseOverPreview = false;
+            
+            // 创建预览元素
+            function createPreviewOverlay() {
+                if (previewOverlay) return previewOverlay;
+                
+                previewOverlay = document.createElement('div');
+                previewOverlay.className = 'preview-overlay';
+                previewOverlay.style.cssText = `
+                    position: fixed;
+                    z-index: 9999;
+                    border: 2px solid #667eea;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    pointer-events: none;
+                    display: none;
+                `;
+                
+                const previewImg = document.createElement('img');
+                previewImg.src = detailImage.src;
+                previewImg.style.cssText = `
+                    max-width: 300px;
+                    max-height: 300px;
+                    display: block;
+                    border-radius: 6px;
+                `;
+                
+                previewOverlay.appendChild(previewImg);
+                document.body.appendChild(previewOverlay);
+                
+                // 鼠标事件监听
+                previewOverlay.addEventListener('mouseenter', () => {
+                    isMouseOverPreview = true;
+                });
+                
+                previewOverlay.addEventListener('mouseleave', () => {
+                    isMouseOverPreview = false;
+                    previewOverlay.style.display = 'none';
+                });
+                
+                return previewOverlay;
+            }
+            
+            // 鼠标进入图片
+            detailImage.addEventListener('mouseenter', function(e) {
+                const preview = createPreviewOverlay();
+                
+                // 计算预览位置，避免超出屏幕
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                const previewWidth = 300;
+                const previewHeight = 300;
+                
+                let previewX = mouseX + 10;
+                let previewY = mouseY + 10;
+                
+                // 检查右边界
+                if (previewX + previewWidth > window.innerWidth) {
+                    previewX = mouseX - previewWidth - 10;
+                }
+                
+                // 检查下边界
+                if (previewY + previewHeight > window.innerHeight) {
+                    previewY = mouseY - previewHeight - 10;
+                }
+                
+                preview.style.left = previewX + 'px';
+                preview.style.top = previewY + 'px';
+                preview.style.display = 'block';
+            });
+            
+            // 鼠标离开图片
+            detailImage.addEventListener('mouseleave', function() {
+                if (previewOverlay && !isMouseOverPreview) {
+                    previewOverlay.style.display = 'none';
+                }
+            });
+            
+            // 确保预览元素被移除
+            window.addEventListener('beforeunload', function() {
+                if (previewOverlay && document.body.contains(previewOverlay)) {
+                    document.body.removeChild(previewOverlay);
+                }
+            });
+        }
+        
+        // 收藏功能
+        let isFavorited = false;
+        let isLoadingFavorite = false;
+        
+        function toggleFavorite() {
+            if (isLoadingFavorite) return;
+            isLoadingFavorite = true;
+            
+            // 更新按钮状态显示加载中
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span id="favorite-text">处理中...</span>';
+            btn.disabled = true;
+            
+            fetch('/lost/favorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + getItemId()
+            })
+            .then(response => response.json())
+            .then(data => {
+                isLoadingFavorite = false;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    isFavorited = data.isFavorited;
+                    updateFavoriteButton();
+                    showMessage(data.message, 'success');
+                } else {
+                    btn.innerHTML = originalContent;
+                    showMessage(data.message || '操作失败', 'error');
+                }
+            })
+            .catch(error => {
+                isLoadingFavorite = false;
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        function updateFavoriteButton() {
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const text = document.getElementById('favorite-text');
+            
+            if (isFavorited) {
+                text.textContent = '⭐ 已收藏';
+                btn.className = 'btn btn-success';
+            } else {
+                text.textContent = '⭐ 收藏';
+                btn.className = 'btn btn-primary';
+            }
+        }
+        
+        function checkFavoriteStatus() {
+            // 检查用户是否已登录
+            const isLoggedIn = false; // 这里应该根据实际登录状态判断
+            
+            if (!isLoggedIn) return;
+            
+            fetch('/lost/favorite/status/' + getItemId())
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isFavorited = data.isFavorited;
+                    updateFavoriteButton();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking favorite status:', error);
+            });
+        }
+        
+        function showMessage(message, type) {
+            // 简单的消息提示
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#51cf66' : '#ff6b6b'};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 10001;
+                animation: slideUp 0.3s ease-out;
+            `;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(messageDiv)) {
+                        document.body.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 2000);
+        }
+        
+        // 评论相关功能
+        function loadComments() {
+            const container = document.getElementById('comments-list');
+            if (!container) return;
+            
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">加载中...</div>';
+            
+            fetch('/lost/comments/' + getItemId())
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayComments(data.comments);
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无评论</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+                container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">加载失败</div>';
+            });
+        }
+        
+        function displayComments(comments) {
+            const container = document.getElementById('comments-list');
+            if (!container) return;
+            
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无评论</div>';
+                return;
+            }
+            
+            const commentsHtml = comments.map(comment => createCommentElement(comment)).join('');
+            container.innerHTML = commentsHtml;
+        }
+        
+        function createCommentElement(comment) {
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment-item';
+            commentDiv.id = 'comment-' + comment.id;
+            
+            const repliesHtml = comment.replies && comment.replies.length > 0 
+                ? `<div class="reply-section" id="replies-${comment.id}">
+                     ${comment.replies.map(reply => createReplyElement(reply)).join('')}
+                   </div>`
+                : '';
+            
+            commentDiv.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-avatar">${comment.user.realName ? comment.user.realName.charAt(0) : 'U'}</div>
+                    <div class="comment-author">${comment.user.realName || '匿名用户'}</div>
+                    <div class="comment-time">${formatTime(comment.createTime)}</div>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                <div class="comment-actions">
+                    <button class="btn-like" onclick="likeComment(${comment.id})">👍 <span id="like-count-${comment.id}">${comment.likeCount || 0}</span></button>
+                    <button class="btn-reply" onclick="showReplyForm(${comment.id})">回复</button>
+                </div>
+                ${repliesHtml}
+            `;
+            
+            return commentDiv.outerHTML;
+        }
+        
+        function createReplyElement(reply) {
+            const replyDiv = document.createElement('div');
+            replyDiv.className = 'reply-item';
+            
+            replyDiv.innerHTML = `
+                <span class="reply-author">${reply.user.realName || '匿名用户'}：</span>
+                <span class="reply-content">${reply.content}</span>
+                <div class="reply-time">${formatTime(reply.createTime)}</div>
+            `;
+            
+            return replyDiv.outerHTML;
+        }
+        
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            const date = new Date(timeString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                if (hours === 0) {
+                    const minutes = Math.floor(diff / (1000 * 60));
+                    return minutes + '分钟前';
+                }
+                return hours + '小时前';
+            } else if (days === 1) {
+                return '昨天';
+            } else if (days < 7) {
+                return days + '天前';
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+        
+        function submitComment() {
+            const content = document.getElementById('comment-content').value.trim();
+            if (!content) {
+                showMessage('请输入评论内容', 'error');
+                return;
+            }
+            
+            const btn = document.querySelector('[onclick="submitComment()"]');
+            const originalContent = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> 发表中...';
+            btn.disabled = true;
+            
+            fetch('/lost/comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + getItemId() + '&content=' + encodeURIComponent(content)
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                
+                if (data.success) {
+                    document.getElementById('comment-content').value = '';
+                    showMessage('评论发表成功', 'success');
+                    loadComments(); // 重新加载评论
+                } else {
+                    showMessage(data.message || '评论发表失败', 'error');
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        function likeComment(commentId) {
+            fetch('/lost/comment/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'commentId=' + commentId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const likeCountElement = document.getElementById('like-count-' + commentId);
+                    if (likeCountElement) {
+                        likeCountElement.textContent = data.likeCount;
+                    }
+                    showMessage('点赞成功', 'success');
+                } else {
+                    showMessage(data.message || '点赞失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        function showReplyForm(commentId) {
+            const commentElement = document.getElementById('comment-' + commentId);
+            let replyForm = commentElement.querySelector('.reply-form');
+            
+            if (!replyForm) {
+                replyForm = document.createElement('div');
+                replyForm.className = 'reply-form';
+                replyForm.innerHTML = `
+                    <textarea class="reply-content-input" placeholder="写下你的回复..."></textarea>
+                    <button class="btn btn-primary" onclick="submitReply(${commentId})" style="margin-top: 10px;">回复</button>
+                `;
+                commentElement.appendChild(replyForm);
+            }
+            
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function submitReply(commentId) {
+            const replyContent = document.querySelector('.reply-form .reply-content-input').value.trim();
+            if (!replyContent) {
+                showMessage('请输入回复内容', 'error');
+                return;
+            }
+            
+            const btn = document.querySelector('.reply-form .btn-primary');
+            const originalContent = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> 发表中...';
+            btn.disabled = true;
+            
+            fetch('/lost/reply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'commentId=' + commentId + '&content=' + encodeURIComponent(replyContent)
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                
+                if (data.success) {
+                    showMessage('回复发表成功', 'success');
+                    loadComments(); // 重新加载评论
+                } else {
+                    showMessage(data.message || '回复发表失败', 'error');
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        // 其他功能函数
+        function updateStatus(itemId, status) {
+            fetch('/lost/updateStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + itemId + '&status=' + status
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('状态更新成功', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMessage(data.message || '状态更新失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        function deleteItem(itemId) {
+            if (!confirm('确定要删除这个失物吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            fetch('/lost/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + itemId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('删除成功', 'success');
+                    setTimeout(() => location.href = '/lost/list', 1000);
+                } else {
+                    showMessage(data.message || '删除失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            });
+        }
+        
+        function downloadImage() {
+            const imageUrl = '[[${item.imageUrl}]]';
+            if (imageUrl) {
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = '失物图片_' + getItemId() + '.jpg';
+                link.click();
+            }
+        }
+        
+        function reportItem() {
+            const reason = prompt('请输入举报原因：');
+            if (reason && reason.trim()) {
+                fetch('/lost/report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'itemId=' + getItemId() + '&reason=' + encodeURIComponent(reason.trim())
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('举报已提交，我们会尽快处理');
+                    } else {
+                        alert(data.message || '举报失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('举报失败，请稍后重试');
+                });
+            }
+        }
+        
+        // 滚动到顶部功能
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 监听滚动事件
+        window.addEventListener('scroll', function() {
+            const scrollTopBtn = document.getElementById('scroll-top');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // 显示/隐藏回到顶部按钮
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.style.display = 'block';
+            } else {
+                scrollTopBtn.style.display = 'none';
+            }
+            
+            // 更新进度条
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollTop = window.pageYOffset;
+            const progress = (scrollTop / scrollHeight) * 100;
+            progressBar.style.width = progress + '%';
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initImageEnlargement();
+            initImageHoverPreview();
+            checkFavoriteStatus();
+            
+            // 恢复滚动位置
+            const commentsState = StateManager.getCommentsState();
+            if (commentsState.lastScrollPosition > 0) {
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, commentsState.lastScrollPosition);
+                });
+            }
+            
+            // 保存滚动位置
+            let saveScrollTimeout;
+            window.addEventListener('scroll', function() {
+                clearTimeout(saveScrollTimeout);
+                saveScrollTimeout = setTimeout(() => {
+                    const commentsState = StateManager.getCommentsState();
+                    commentsState.lastScrollPosition = window.pageYOffset;
+                    StateManager.saveCommentsState(commentsState);
+                }, 500);
+            });
+        });
+        
+        // 图片错误处理函数
+        function handleImageError(img) {
+            console.warn('图片加载失败:', img.src);
+            img.style.display = 'none';
+            const placeholder = img.nextElementSibling;
+            if (placeholder && placeholder.classList.contains('image-placeholder')) {
+                placeholder.style.display = 'block';
+            }
+        }
+        
+        // 页面卸载前保存状态
+        window.addEventListener('beforeunload', function() {
+            const commentsState = StateManager.getCommentsState();
+            commentsState.lastScrollPosition = window.pageYOffset;
+            StateManager.saveCommentsState(commentsState);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nxu.dao.UserMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="userResultMap" type="User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="studentNo" column="student_no"/>
+        <result property="phone" column="phone"/>
+        <result property="qq" column="qq"/>
+        <result property="wechat" column="wechat"/>
+        <result property="email" column="email"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- 根据用户名查询用户 -->
+    <select id="findByUsername" resultMap="userResultMap">
+        SELECT id, username, password, real_name, student_no, phone, qq, wechat, email, create_time, update_time
+        FROM user
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据用户名和密码查询用户（用于登录验证） -->
+    <select id="findByUsernameAndPassword" resultMap="userResultMap">
+        SELECT id, username, password, real_name, student_no, phone, qq, wechat, email, create_time, update_time
+        FROM user
+        WHERE username = #{username} AND password = #{password}
+    </select>
+
+    <!-- 根据ID查询用户 -->
+    <select id="findById" resultMap="userResultMap">
+        SELECT id, username, password, real_name, student_no, phone, qq, wechat, email, create_time, update_time
+        FROM user
+        WHERE id = #{id}
+    </select>
+
+    <!-- 注册用户 -->
+    <insert id="insert" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, real_name, student_no, phone, qq, wechat, email, create_time)
+        VALUES (#{username}, #{password}, #{realName}, #{studentNo}, #{phone}, #{qq}, #{wechat}, #{email}, NOW())
+    </insert>
+
+</mapper>
+

@@ -1,0 +1,1521 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失物详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .detail-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .detail-image { width: 100%; max-width: 600px; border-radius: 10px; margin: 20px 0; }
+        .detail-info { margin: 15px 0; }
+        .detail-label { font-weight: bold; color: #666; width: 100px; display: inline-block; }
+        .detail-value { color: #333; }
+        .type-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-right: 10px; color: white; }
+        .type-lost { background: #ff6b6b; }
+        .type-found { background: #4ecdc4; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; }
+        .status-found { background: #51cf66; }
+        .status-lost { background: #ffd43b; color: #333; }
+        .contact-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .actions { margin-top: 30px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #51cf66; color: white; }
+        .btn-danger { background: #ff6b6b; color: white; }
+        .btn-warning { background: #ffd43b; color: #333; }
+        .btn-info { background: #74c0fc; color: white; }
+        .comment-section { animation: fadeInUp 0.6s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .scroll-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #667eea; color: white; border: none; border-radius: 50%; cursor: pointer; display: none; transition: all 0.3s ease; z-index: 1000; }
+        .scroll-top:hover { background: #5a6fd8; transform: translateY(-3px); }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #667eea; z-index: 9999; transition: width 0.3s ease; }
+        .btn-like:hover, .btn-reply:hover { opacity: 0.8; }
+        .comment-item:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .detail-image:hover { filter: brightness(1.05); transform: scale(1.01); transition: all 0.3s ease; cursor: zoom-in; }
+        .related-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .comment-section { animation: slideUp 0.5s ease-out; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/lost/list">← 返回列表</a>
+    </div>
+    <div class="container" data-item-id="1">
+        <div class="detail-card">
+            <div class="detail-title">
+                <span>撒基督教洒红节卡顿</span>
+                <span class="type-badge type-lost">失物</span>
+                <span class="status-badge status-lost">未找到</span>
+            </div>
+            <div class="image-container">
+                <img src="/uploads/images/06e03c5b-1441-4b88-b118-9fcb533c5f27.png" class="detail-image" alt="图片" 
+                     onerror="handleImageError(this)" onclick="fullscreenImage()">
+                <div class="image-placeholder" style="display: none;" onclick="fullscreenImage()">
+                    <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #ddd;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                        <div style="color: #666;">图片加载失败</div>
+                        <div style="color: #999; font-size: 14px; margin-top: 5px;">点击查看详情</div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-info">
+                <span class="detail-label">分类：</span>
+                <span class="detail-value">钱包证件</span>
+            </div>
+            <div class="detail-info">
+                <span class="detail-label">地点：</span>
+                <span class="detail-value">金卡送给大家卡江户时代</span>
+            </div>
+            <div class="detail-info">
+                <span class="detail-label">时间：</span>
+                <span class="detail-value">2025-12-29 22:23</span>
+            </div>
+            <div class="detail-info">
+                <span class="detail-label">描述：</span>
+                <div class="detail-value" style="white-space: pre-wrap;">黑色</div>
+            </div>
+            <div class="contact-info">
+                <h3>联系方式</h3>
+                <div class="detail-info">
+                    <span class="detail-label">手机：</span>
+                    <span class="detail-value">12345678</span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">QQ：</span>
+                    <span class="detail-value">123321456654</span>
+                </div>
+                
+                <div class="detail-info">
+                    <span class="detail-label">邮箱：</span>
+                    <span class="detail-value">admin@example.com</span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">发布者：</span>
+                    <span class="detail-value">管理员</span>
+                    <span>（<span>123</span>）</span>
+                </div>
+            </div>
+            <div class="detail-info">
+                <span class="detail-label">发布时间：</span>
+                <span class="detail-value">2025-12-29 22:23</span>
+                <span style="margin-left: 20px;">浏览次数：<span>10</span></span>
+            </div>
+            
+
+            
+
+            <div class="actions">
+                <button class="btn btn-info" onclick="downloadImage()">下载图片</button>
+                <button class="btn btn-primary" onclick="fullscreenImage()">全屏查看</button>
+            </div>
+
+            <!-- 收藏功能 -->
+            
+
+            <!-- 相关推荐 -->
+            
+
+            <!-- 评论系统 -->
+            <div class="comments-section" style="margin-top: 40px;">
+                <h3>评论 (<span id="comment-count">0</span>)</h3>
+                
+                <div class="comment-login" style="margin: 20px 0; text-align: center; color: #666;">
+                    请先 <a href="/user/login" style="color: #667eea;">登录</a> 后发表评论
+                </div>
+                <div class="comments-list" id="comments-list">
+                    <!-- 动态加载评论 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论模板 -->
+    <div id="comment-template" style="display: none;">
+        <div class="comment-item" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="comment-author" style="font-weight: bold; color: #333;"></div>
+                <div class="comment-time" style="color: #999; font-size: 14px;"></div>
+            </div>
+            <div class="comment-content-text" style="color: #555; line-height: 1.5;"></div>
+        </div>
+    </div>
+    <script>
+        function updateStatus(id, status) {
+            if (confirm('确定要更新状态吗？')) {
+                fetch('/lost/status/' + id, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'status=' + status
+                })
+                .then(response => {
+                    if (response.status === 404) {
+                        throw new Error('API接口不存在');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('操作失败，请稍后重试: ' + error.message);
+                });
+            }
+        }
+
+        function deleteItem(id) {
+            if (confirm('确定要删除这条信息吗？此操作不可恢复！')) {
+                fetch('/lost/delete/' + id, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                })
+                .then(response => {
+                    if (response.status === 404) {
+                        throw new Error('API接口不存在');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功');
+                        window.location.href = '/lost/my';
+                    } else {
+                        alert(data.message || '删除失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试: ' + error.message);
+                });
+            }
+        }
+
+        function shareItem() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    text: '发现一个失物信息',
+                    url: url
+                });
+            } else {
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(url).then(function() {
+                    alert('链接已复制到剪贴板');
+                }, function(err) {
+                    console.error('复制失败:', err);
+                    alert('链接：' + url);
+                });
+            }
+        }
+
+        function reportItem() {
+            const reason = prompt('请输入举报原因：');
+            if (reason && reason.trim()) {
+                fetch('/lost/report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'itemId=' + getItemId() + '&reason=' + encodeURIComponent(reason.trim())
+                })
+                .then(response => {
+                    if (response.status === 404) {
+                        throw new Error('API接口不存在');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('举报已提交，我们会尽快处理');
+                    } else {
+                        alert(data.message || '举报失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('举报失败，请稍后重试: ' + error.message);
+                });
+            }
+        }
+
+        function downloadImage() {
+            const imageUrl = '/uploads/images/06e03c5b-1441-4b88-b118-9fcb533c5f27.png';
+            if (imageUrl) {
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = '失物图片_' + getItemId() + '.jpg';
+                link.click();
+            }
+        }
+
+        function fullscreenImage() {
+            const imageUrl = '/uploads/images/06e03c5b-1441-4b88-b118-9fcb533c5f27.png';
+            if (imageUrl) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.95);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                    animation: fadeIn 0.3s ease-out;
+                `;
+                
+                // 图片容器
+                const imgContainer = document.createElement('div');
+                imgContainer.style.cssText = `
+                    position: relative;
+                    max-width: 95vw;
+                    max-height: 90vh;
+                `;
+                
+                // 图片
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.style.cssText = `
+                    max-width: 100%;
+                    max-height: 90vh;
+                    object-fit: contain;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    animation: zoomIn 0.3s ease-out;
+                `;
+                
+                // 关闭按钮
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '✕';
+                closeBtn.style.cssText = `
+                    position: absolute;
+                    top: -40px;
+                    right: 0;
+                    background: rgba(255,255,255,0.2);
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                    transition: all 0.2s ease;
+                `;
+                
+                closeBtn.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255,255,255,0.3)';
+                    this.style.transform = 'scale(1.1)';
+                });
+                
+                closeBtn.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255,255,255,0.2)';
+                    this.style.transform = 'scale(1)';
+                });
+                
+                closeBtn.onclick = function() {
+                    overlay.style.animation = 'fadeOut 0.3s ease-in';
+                    setTimeout(() => {
+                        document.body.removeChild(overlay);
+                    }, 300);
+                };
+                
+                // 图片信息
+                const imgInfo = document.createElement('div');
+                imgInfo.style.cssText = `
+                    position: absolute;
+                    bottom: -40px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    color: white;
+                    font-size: 14px;
+                    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+                `;
+                
+                imgInfo.innerHTML = `
+                    <div>点击图片外区域或按 ESC 键关闭</div>
+                `;
+                
+                // 添加鼠标滚轮缩放功能
+                let scale = 1;
+                img.style.transform = `scale(${scale})`;
+                
+                overlay.addEventListener('wheel', function(e) {
+                    e.preventDefault();
+                    if (e.deltaY < 0) {
+                        // 放大
+                        scale = Math.min(scale + 0.1, 3);
+                    } else {
+                        // 缩小
+                        scale = Math.max(scale - 0.1, 0.5);
+                    }
+                    img.style.transform = `scale(${scale})`;
+                });
+                
+                // 添加键盘事件
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeBtn.onclick();
+                    }
+                });
+                
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(closeBtn);
+                imgContainer.appendChild(imgInfo);
+                overlay.appendChild(imgContainer);
+                document.body.appendChild(overlay);
+                
+                // 点击图片外部关闭
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        closeBtn.onclick();
+                    }
+                });
+            }
+        }
+        
+        // 图片悬停预览功能
+        function initImageHoverPreview() {
+            const detailImage = document.querySelector('.detail-image');
+            if (!detailImage) return;
+            
+            let previewOverlay = null;
+            let isMouseOverPreview = false;
+            
+            // 创建预览元素
+            function createPreviewOverlay() {
+                if (previewOverlay) return previewOverlay;
+                
+                previewOverlay = document.createElement('div');
+                previewOverlay.style.cssText = `
+                    position: fixed;
+                    z-index: 9999;
+                    border: 2px solid #667eea;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    pointer-events: none;
+                    display: none;
+                `;
+                
+                const previewImg = document.createElement('img');
+                previewImg.src = detailImage.src;
+                previewImg.style.cssText = `
+                    max-width: 300px;
+                    max-height: 300px;
+                    display: block;
+                    border-radius: 6px;
+                `;
+                
+                previewOverlay.appendChild(previewImg);
+                document.body.appendChild(previewOverlay);
+                
+                // 鼠标事件监听
+                previewOverlay.addEventListener('mouseenter', () => {
+                    isMouseOverPreview = true;
+                });
+                
+                previewOverlay.addEventListener('mouseleave', () => {
+                    isMouseOverPreview = false;
+                    previewOverlay.style.display = 'none';
+                });
+                
+                return previewOverlay;
+            }
+            
+            // 鼠标进入图片
+            detailImage.addEventListener('mouseenter', function(e) {
+                previewOverlay = createPreviewOverlay();
+                previewOverlay.style.display = 'block';
+            });
+            
+            // 鼠标移动
+            detailImage.addEventListener('mousemove', function(e) {
+                if (previewOverlay) {
+                    const x = e.clientX + 15;
+                    const y = e.clientY + 15;
+                    
+                    // 防止预览框超出屏幕
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+                    const overlayWidth = 300;
+                    const overlayHeight = 300;
+                    
+                    let left = x;
+                    let top = y;
+                    
+                    if (x + overlayWidth > windowWidth) {
+                        left = x - overlayWidth - 30;
+                    }
+                    
+                    if (y + overlayHeight > windowHeight) {
+                        top = y - overlayHeight - 30;
+                    }
+                    
+                    previewOverlay.style.left = left + 'px';
+                    previewOverlay.style.top = top + 'px';
+                }
+            });
+            
+            // 鼠标离开图片
+            detailImage.addEventListener('mouseleave', function() {
+                if (previewOverlay && !isMouseOverPreview) {
+                    previewOverlay.style.display = 'none';
+                }
+            });
+            
+            // 确保预览元素被移除
+            window.addEventListener('beforeunload', function() {
+                if (previewOverlay && document.body.contains(previewOverlay)) {
+                    document.body.removeChild(previewOverlay);
+                }
+            });
+        }
+
+        // 收藏功能
+        let isFavorited = false;
+        let isLoadingFavorite = false;
+        
+        // 获取itemId的函数，支持动态获取
+        function getItemId() {
+            // 尝试从data属性获取
+            const element = document.querySelector('[data-item-id]');
+            if (element) {
+                return element.getAttribute('data-item-id');
+            }
+            // 如果没有找到，返回默认值（用于静态测试）
+            return '1';
+        }
+        
+        // 状态管理对象
+        const StateManager = {
+            // 从localStorage加载状态
+            load: function() {
+                try {
+                    const savedState = localStorage.getItem('lost_detail_state_' + getItemId());
+                    if (savedState) {
+                        return JSON.parse(savedState);
+                    }
+                } catch (e) {
+                    console.error('Error loading state:', e);
+                }
+                return {};
+            },
+            
+            // 保存状态到localStorage
+            save: function(state) {
+                try {
+                    localStorage.setItem('lost_detail_state_' + getItemId(), JSON.stringify(state));
+                } catch (e) {
+                    console.error('Error saving state:', e);
+                }
+            },
+            
+            // 获取评论状态
+            getCommentsState: function() {
+                const state = this.load();
+                return state.comments || { lastScrollPosition: 0, expandedComments: {} };
+            },
+            
+            // 保存评论状态
+            saveCommentsState: function(commentsState) {
+                const state = this.load();
+                state.comments = commentsState;
+                this.save(state);
+            },
+            
+            // 获取用户偏好设置
+            getUserPreferences: function() {
+                const state = this.load();
+                return state.preferences || { 
+                    autoLoadComments: true, 
+                    commentSortOrder: 'desc',
+                    showTimestamps: true 
+                };
+            },
+            
+            // 保存用户偏好设置
+            saveUserPreferences: function(preferences) {
+                const state = this.load();
+                state.preferences = preferences;
+                this.save(state);
+            }
+        };
+        
+        function toggleFavorite() {
+            if (isLoadingFavorite) return;
+            isLoadingFavorite = true;
+            
+            // 更新按钮状态显示加载中
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span id="favorite-text">处理中...</span>';
+            btn.disabled = true;
+            
+            fetch('/lost/favorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + getItemId()
+            })
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                return response.json();
+            })
+            .then(data => {
+                isLoadingFavorite = false;
+                btn.disabled = false;
+                
+                if (data.success) {
+                    isFavorited = data.isFavorited;
+                    updateFavoriteButton();
+                    showMessage(data.message, 'success');
+                } else {
+                    btn.innerHTML = originalContent;
+                    showMessage(data.message || '操作失败', 'error');
+                }
+            })
+            .catch(error => {
+                isLoadingFavorite = false;
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                console.error('Error:', error);
+                showMessage('操作失败，请稍后重试', 'error');
+            });
+        }
+        
+        function updateFavoriteButton() {
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const textSpan = document.getElementById('favorite-text');
+            
+            // 添加空值检查，防止元素不存在导致错误
+            if (btn && textSpan) {
+                if (isFavorited) {
+                    textSpan.innerHTML = '♥ 已收藏';
+                    btn.style.backgroundColor = '#ff6b6b';
+                    btn.style.color = 'white';
+                } else {
+                    textSpan.innerHTML = '♡ 收藏';
+                    btn.style.backgroundColor = '#ffd43b';
+                    btn.style.color = '#333';
+                }
+            }
+        }
+        
+        function checkFavoriteStatus() {
+            // 只有已登录用户才检查收藏状态
+            const isLoggedIn = false;
+            if (!isLoggedIn) return;
+            
+            fetch('/lost/favorite/status/' + getItemId())
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    isFavorited = data.isFavorited;
+                    updateFavoriteButton();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // 评论功能
+        let isSubmittingComment = false;
+        
+        function submitComment() {
+            if (isSubmittingComment) {
+                showMessage('评论正在发表中，请稍候...', 'warning');
+                return;
+            }
+            
+            const content = document.getElementById('comment-content').value.trim();
+            if (!content) {
+                showMessage('请输入评论内容', 'warning');
+                return;
+            }
+            
+            if (content.length > 500) {
+                showMessage('评论内容不能超过500字符', 'warning');
+                return;
+            }
+            
+            if (content.length < 5) {
+                showMessage('评论内容至少需要5个字符', 'warning');
+                return;
+            }
+
+            isSubmittingComment = true;
+            const btn = document.querySelector('[onclick="submitComment()"]');
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> 发表中...';
+            btn.disabled = true;
+
+            fetch('/lost/comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'itemId=' + getItemId() + '&content=' + encodeURIComponent(content)
+            })
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 重置提交状态
+                isSubmittingComment = false;
+                btn.disabled = false;
+                btn.textContent = originalText;
+                
+                if (data.success) {
+                    // 清空输入框
+                    document.getElementById('comment-content').value = '';
+                    // 重新加载评论列表
+                    loadComments();
+                    // 显示成功消息
+                    showMessage('评论发表成功', 'success');
+                } else {
+                    showMessage(data.message || '评论失败', 'error');
+                }
+            })
+            .catch(error => {
+                // 确保在错误情况下也重置状态
+                isSubmittingComment = false;
+                btn.disabled = false;
+                btn.textContent = originalText;
+                console.error('Error:', error);
+                showMessage('评论失败，请稍后重试', 'error');
+            });
+        }
+        
+        function loadComments() {
+            // 添加加载状态
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">加载中...</div>';
+            
+            fetch('/lost/comments/' + getItemId())
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                // 检查响应类型，确保返回的是JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('响应不是有效的JSON格式');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    comments = data.comments; // 保存评论数据
+                    displayComments(comments);
+                    document.getElementById('comment-count').textContent = data.comments.length;
+                } else {
+                    container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">加载失败，请稍后重试</div>';
+                }
+            })
+            .catch(error => {
+                // 输出详细错误信息
+                console.error('加载评论失败:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; color: #ff6b6b; padding: 20px;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                        <div>加载评论失败</div>
+                        <div style="font-size: 14px; color: #999; margin-top: 5px;">${error.message}</div>
+                        <button onclick="loadComments()" style="margin-top: 10px; padding: 5px 10px; border: 1px solid #ddd; background: white; border-radius: 3px; cursor: pointer;">重试</button>
+                    </div>
+                `;
+            });
+        }
+        
+        function displayComments(comments) {
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '';
+            
+            // 获取用户偏好
+            const preferences = StateManager.getUserPreferences();
+            
+            if (comments.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 30px; background: #f8f9fa; border-radius: 8px; margin: 10px 0;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">💬</div>
+                        <div>暂无评论，来说点什么吧~</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 添加评论筛选和排序控件
+            const commentsControls = document.createElement('div');
+            commentsControls.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding: 10px 15px;
+                background: #f8f9fa;
+                border-radius: 6px;
+            `;
+            
+            const sortSelect = document.createElement('select');
+            sortSelect.id = 'comment-sort';
+            sortSelect.style.cssText = 'padding: 5px; border-radius: 4px; border: 1px solid #ddd;';
+            sortSelect.innerHTML = `
+                <option value="desc" ${preferences.commentSortOrder === 'desc' ? 'selected' : ''}>最新评论</option>
+                <option value="asc" ${preferences.commentSortOrder === 'asc' ? 'selected' : ''}>最早评论</option>
+                <option value="likes" ${preferences.commentSortOrder === 'likes' ? 'selected' : ''}>最多点赞</option>
+            `;
+            
+            const sortLabel = document.createElement('label');
+            sortLabel.textContent = '排序方式:';
+            sortLabel.style.cssText = 'margin-right: 10px; color: #666;';
+            
+            const filterSelect = document.createElement('select');
+            filterSelect.id = 'comment-filter';
+            filterSelect.style.cssText = 'padding: 5px; border-radius: 4px; border: 1px solid #ddd;';
+            filterSelect.innerHTML = `
+                <option value="all">所有评论</option>
+                <option value="withReplies">有回复的</option>
+                <option value="popular">热门评论</option>
+            `;
+            
+            const filterLabel = document.createElement('label');
+            filterLabel.textContent = '显示:';
+            filterLabel.style.cssText = 'margin-right: 10px; color: #666;';
+            
+            const leftDiv = document.createElement('div');
+            leftDiv.style.cssText = 'display: flex; align-items: center;';
+            leftDiv.appendChild(sortLabel);
+            leftDiv.appendChild(sortSelect);
+            
+            const rightDiv = document.createElement('div');
+            rightDiv.style.cssText = 'display: flex; align-items: center;';
+            rightDiv.appendChild(filterLabel);
+            rightDiv.appendChild(filterSelect);
+            
+            commentsControls.appendChild(leftDiv);
+            commentsControls.appendChild(rightDiv);
+            
+            container.appendChild(commentsControls);
+            
+            // 添加评论导航栏
+            const commentsNav = document.createElement('div');
+            commentsNav.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+            `;
+            
+            const navLeft = document.createElement('div');
+            navLeft.style.cssText = 'display: flex; gap: 15px;';
+            
+            const navAll = document.createElement('a');
+            navAll.href = '#';
+            navAll.id = 'nav-all';
+            navAll.className = 'comment-nav-link active';
+            navAll.style.cssText = 'color: #667eea; text-decoration: none; font-weight: bold;';
+            navAll.textContent = '全部评论';
+            
+            const navReplies = document.createElement('a');
+            navReplies.href = '#';
+            navReplies.id = 'nav-replies';
+            navReplies.className = 'comment-nav-link';
+            navReplies.style.cssText = 'color: #666; text-decoration: none;';
+            navReplies.textContent = '有回复';
+            
+            const navPopular = document.createElement('a');
+            navPopular.href = '#';
+            navPopular.id = 'nav-popular';
+            navPopular.className = 'comment-nav-link';
+            navPopular.style.cssText = 'color: #666; text-decoration: none;';
+            navPopular.textContent = '热门';
+            
+            const navRight = document.createElement('div');
+            const collapseBtn = document.createElement('button');
+            collapseBtn.id = 'collapse-all-replies';
+            collapseBtn.style.cssText = 'background: #f8f9fa; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;';
+            collapseBtn.textContent = '折叠所有回复';
+            
+            navLeft.appendChild(navAll);
+            navLeft.appendChild(navReplies);
+            navLeft.appendChild(navPopular);
+            navRight.appendChild(collapseBtn);
+            
+            commentsNav.appendChild(navLeft);
+            commentsNav.appendChild(navRight);
+            
+            container.appendChild(commentsNav);
+            
+            // 创建评论容器
+            const commentsContainer = document.createElement('div');
+            commentsContainer.className = 'comments-container';
+            container.appendChild(commentsContainer);
+            
+            // 添加事件监听器（现在元素已经在DOM中）
+            sortSelect.addEventListener('change', function() {
+                preferences.commentSortOrder = this.value;
+                StateManager.saveUserPreferences(preferences);
+                loadComments();
+            });
+            
+            navAll.addEventListener('click', function(e) {
+                e.preventDefault();
+                updateNav(this);
+                displayFilteredComments(comments, 'all');
+            });
+            
+            navReplies.addEventListener('click', function(e) {
+                e.preventDefault();
+                updateNav(this);
+                displayFilteredComments(comments, 'withReplies');
+            });
+            
+            navPopular.addEventListener('click', function(e) {
+                e.preventDefault();
+                updateNav(this);
+                displayFilteredComments(comments, 'popular');
+            });
+            
+            collapseBtn.addEventListener('click', function() {
+                const isCollapsed = this.textContent === '展开所有回复';
+                this.textContent = isCollapsed ? '折叠所有回复' : '展开所有回复';
+                toggleAllReplies(isCollapsed);
+            });
+            
+            // 按排序方式显示评论
+            displayFilteredComments(comments, 'all');
+        }
+        
+        function updateNav(activeLink) {
+            document.querySelectorAll('.comment-nav-link').forEach(link => {
+                link.classList.remove('active');
+                link.style.color = '#666';
+                link.style.fontWeight = 'normal';
+            });
+            
+            activeLink.classList.add('active');
+            activeLink.style.color = '#667eea';
+            activeLink.style.fontWeight = 'bold';
+        }
+        
+        function displayFilteredComments(comments, filter) {
+            const container = document.getElementById('comments-list');
+            const preferences = StateManager.getUserPreferences();
+            
+            // 过滤评论
+            let filteredComments = [...comments];
+            
+            switch(filter) {
+                case 'withReplies':
+                    filteredComments = comments.filter(comment => comment.replies && comment.replies.length > 0);
+                    break;
+                case 'popular':
+                    filteredComments = comments.filter(comment => comment.likes && comment.likes > 0)
+                        .sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                    break;
+                default: // all
+                    break;
+            }
+            
+            // 排序评论
+            switch(preferences.commentSortOrder) {
+                case 'asc':
+                    filteredComments.sort((a, b) => new Date(a.createTime) - new Date(b.createTime));
+                    break;
+                case 'likes':
+                    filteredComments.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                    break;
+                default: // desc
+                    filteredComments.sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
+                    break;
+            }
+            
+            // 获取评论容器
+            const commentsContainer = container.querySelector('.comments-container');
+            if (!commentsContainer) {
+                console.error('Comments container not found');
+                return;
+            }
+            
+            // 清空评论容器
+            commentsContainer.innerHTML = '';
+            
+            // 显示评论
+            filteredComments.forEach(comment => {
+                const commentElement = createCommentElement(comment);
+                commentsContainer.appendChild(commentElement);
+            });
+            
+            // 保存当前滚动位置
+            const commentsState = StateManager.getCommentsState();
+            commentsState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            StateManager.saveCommentsState(commentsState);
+        }
+        
+        function toggleAllReplies(expand) {
+            const replyContainers = document.querySelectorAll('.comment-replies');
+            replyContainers.forEach(container => {
+                container.style.display = expand ? 'block' : 'none';
+            });
+        }
+        
+        function createCommentElement(comment) {
+            const commentDiv = document.createElement('div');
+            commentDiv.style.cssText = `
+                background: #f8f9fa; 
+                padding: 15px; 
+                border-radius: 8px; 
+                margin: 10px 0;
+                border-left: 4px solid #667eea;
+                transition: all 0.3s ease;
+            `;
+            
+            // 创建用户信息头部
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+            
+            const userInfoDiv = document.createElement('div');
+            userInfoDiv.style.cssText = 'display: flex; align-items: center;';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.style.cssText = `
+                width: 32px; height: 32px; background: #667eea; border-radius: 50%; 
+                display: flex; align-items: center; justify-content: center; color: white; 
+                font-weight: bold; margin-right: 10px;
+            `;
+            avatarDiv.textContent = comment.userName ? comment.userName.charAt(0) : 'U';
+            
+            const userNameDiv = document.createElement('div');
+            userNameDiv.style.cssText = 'font-weight: bold; color: #333;';
+            userNameDiv.textContent = comment.userName || '匿名用户';
+            
+            userInfoDiv.appendChild(avatarDiv);
+            userInfoDiv.appendChild(userNameDiv);
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.style.cssText = 'color: #999; font-size: 14px;';
+            timeDiv.textContent = formatTime(comment.createTime);
+            
+            headerDiv.appendChild(userInfoDiv);
+            headerDiv.appendChild(timeDiv);
+            
+            // 创建评论内容
+            const contentDiv = document.createElement('div');
+            contentDiv.style.cssText = 'color: #555; line-height: 1.6; word-wrap: break-word;';
+            contentDiv.textContent = comment.content;
+            
+            // 创建操作按钮区域
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.cssText = 'display: flex; align-items: center; margin-top: 8px;';
+            
+            // 点赞按钮
+            const likeBtn = document.createElement('button');
+            likeBtn.className = 'btn-like';
+            likeBtn.setAttribute('data-comment-id', comment.id);
+            likeBtn.style.cssText = 'background: none; border: none; color: #666; cursor: pointer; padding: 0; margin-right: 15px; display: flex; align-items: center;';
+            
+            const likeIcon = document.createElement('span');
+            likeIcon.className = 'like-icon';
+            likeIcon.style.cssText = 'font-size: 18px;';
+            likeIcon.textContent = '👍';
+            
+            const likeCount = document.createElement('span');
+            likeCount.className = 'like-count';
+            likeCount.style.cssText = 'margin-left: 5px;';
+            likeCount.textContent = comment.likes || 0;
+            
+            likeBtn.appendChild(likeIcon);
+            likeBtn.appendChild(likeCount);
+            
+            // 回复按钮
+            const replyBtn = document.createElement('button');
+            replyBtn.className = 'btn-reply';
+            replyBtn.setAttribute('data-comment-id', comment.id);
+            replyBtn.style.cssText = 'background: none; border: none; color: #667eea; cursor: pointer; padding: 0; margin-right: 15px;';
+            replyBtn.textContent = '回复';
+            
+            actionsDiv.appendChild(likeBtn);
+            actionsDiv.appendChild(replyBtn);
+            
+            // 创建回复表单容器
+            const replyFormContainer = document.createElement('div');
+            replyFormContainer.className = 'reply-form-container';
+            replyFormContainer.id = `reply-form-${comment.id}`;
+            replyFormContainer.style.cssText = 'display: none; margin-top: 10px;';
+            
+            const textarea = document.createElement('textarea');
+            textarea.className = 'reply-content';
+            textarea.placeholder = '写下你的回复...';
+            textarea.style.cssText = 'width: 100%; height: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;';
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.cssText = 'display: flex; justify-content: flex-end; margin-top: 5px;';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn-cancel-reply';
+            cancelBtn.style.cssText = 'background: #f8f9fa; border: none; padding: 5px 10px; border-radius: 3px; margin-right: 5px; cursor: pointer;';
+            cancelBtn.textContent = '取消';
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'btn-submit-reply';
+            submitBtn.setAttribute('data-comment-id', comment.id);
+            submitBtn.style.cssText = 'background: #667eea; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer;';
+            submitBtn.textContent = '回复';
+            
+            buttonContainer.appendChild(cancelBtn);
+            buttonContainer.appendChild(submitBtn);
+            
+            replyFormContainer.appendChild(textarea);
+            replyFormContainer.appendChild(buttonContainer);
+            
+            // 创建回复容器
+            const repliesContainer = document.createElement('div');
+            repliesContainer.className = 'comment-replies';
+            repliesContainer.style.cssText = 'margin-top: 10px; padding-left: 15px; border-left: 2px dashed #ddd;';
+            
+            // 如果有回复，添加回复内容
+            if (comment.replies && comment.replies.length > 0) {
+                const repliesTitle = document.createElement('div');
+                repliesTitle.style.cssText = `
+                    margin-top: 15px; 
+                    margin-left: 15px; 
+                    font-size: 14px; 
+                    color: #666; 
+                    font-weight: bold;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 5px;
+                `;
+                repliesTitle.textContent = `回复 (${comment.replies.length})`;
+                repliesContainer.appendChild(repliesTitle);
+                
+                comment.replies.forEach(reply => {
+                    const replyElement = createReplyElement(reply);
+                    repliesContainer.appendChild(replyElement);
+                });
+            }
+            
+            // 组装评论元素
+            commentDiv.appendChild(headerDiv);
+            commentDiv.appendChild(contentDiv);
+            commentDiv.appendChild(actionsDiv);
+            commentDiv.appendChild(replyFormContainer);
+            commentDiv.appendChild(repliesContainer);
+            
+            // 添加事件监听器
+            likeBtn.addEventListener('click', () => toggleLike(comment.id, likeBtn));
+            replyBtn.addEventListener('click', () => toggleReplyForm(comment.id));
+            submitBtn.addEventListener('click', () => submitReply(comment.id));
+            cancelBtn.addEventListener('click', () => toggleReplyForm(comment.id));
+            
+            return commentDiv;
+        }
+        
+        function createReplyElement(reply) {
+            // 创建回复元素
+            const replyDiv = document.createElement('div');
+            replyDiv.className = 'reply-item';
+            replyDiv.style.cssText = 'background: white; padding: 10px; border-radius: 6px; margin: 8px 0;';
+            
+            // 创建回复内容结构
+            const replyHeader = document.createElement('div');
+            replyHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;';
+            
+            // 创建用户信息
+            const userInfo = document.createElement('div');
+            userInfo.style.cssText = 'display: flex; align-items: center;';
+            
+            // 创建头像
+            const avatar = document.createElement('div');
+            avatar.style.cssText = `
+                width: 24px; height: 24px; background: #764ba2; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center; color: white;
+                font-size: 12px; margin-right: 8px;
+            `;
+            avatar.textContent = reply.userName ? reply.userName.charAt(0) : 'U';
+            
+            // 创建用户名
+            const userName = document.createElement('div');
+            userName.style.cssText = 'font-weight: bold; color: #333; font-size: 14px;';
+            userName.textContent = reply.userName || '匿名用户';
+            
+            userInfo.appendChild(avatar);
+            userInfo.appendChild(userName);
+            
+            // 创建时间
+            const timeElement = document.createElement('div');
+            timeElement.style.cssText = 'color: #999; font-size: 12px;';
+            timeElement.textContent = formatTime(reply.createTime);
+            
+            replyHeader.appendChild(userInfo);
+            replyHeader.appendChild(timeElement);
+            
+            // 创建回复内容
+            const replyContent = document.createElement('div');
+            replyContent.style.cssText = 'color: #555; line-height: 1.5; font-size: 14px;';
+            replyContent.textContent = reply.content;
+            
+            replyDiv.appendChild(replyHeader);
+            replyDiv.appendChild(replyContent);
+            
+            return replyDiv;
+        }
+        
+        function toggleReplyForm(commentId) {
+            const form = document.getElementById(`reply-form-${commentId}`);
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                form.querySelector('.reply-content').focus();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+        
+        function toggleLike(commentId, likeBtn) {
+            const likeCount = likeBtn.querySelector('.like-count');
+            const currentCount = parseInt(likeCount.textContent) || 0;
+            
+            fetch('/lost/comment/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'commentId=' + commentId
+            })
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // 尝试从多个可能的字段获取点赞数
+                    const newLikeCount = data.likeCount || data.likes || data.data || (currentCount + 1);
+                    likeCount.textContent = newLikeCount;
+                    
+                    // 添加动画效果
+                    likeBtn.querySelector('.like-icon').style.transform = 'scale(1.5)';
+                    setTimeout(() => {
+                        likeBtn.querySelector('.like-icon').style.transform = 'scale(1)';
+                    }, 300);
+                    
+                    // 显示消息
+                    const action = data.action === 'unlike' ? '取消点赞' : '点赞';
+                    showMessage(data.message || `${action}成功，当前${newLikeCount}个赞`, 'success');
+                } else {
+                    showMessage(data.message || '点赞失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('点赞失败，请稍后重试', 'error');
+            });
+        }
+        
+        function submitReply(commentId) {
+            const replyContent = document.querySelector(`#reply-form-${commentId} .reply-content`).value.trim();
+            
+            if (!replyContent) {
+                showMessage('请输入回复内容', 'warning');
+                return;
+            }
+            
+            if (replyContent.length > 300) {
+                showMessage('回复内容不能超过300字符', 'warning');
+                return;
+            }
+            
+            // 添加提交状态控制
+            const submitBtn = document.querySelector(`#reply-form-${commentId} .btn-submit-reply`);
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> 发表中...';
+            submitBtn.disabled = true;
+            
+            fetch('/lost/comment/reply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'commentId=' + commentId + '&content=' + encodeURIComponent(replyContent)
+            })
+            .then(response => {
+                if (response.status === 404) {
+                    throw new Error('API接口不存在');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 重置按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                
+                if (data.success) {
+                    // 关闭回复表单并清空内容
+                    toggleReplyForm(commentId);
+                    document.querySelector(`#reply-form-${commentId} .reply-content`).value = '';
+                    
+                    // 重新加载评论
+                    loadComments();
+                    
+                    showMessage('回复发表成功', 'success');
+                } else {
+                    showMessage(data.message || '回复失败', 'error');
+                }
+            })
+            .catch(error => {
+                // 重置按钮状态
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                
+                console.error('Error:', error);
+                showMessage('回复失败，请稍后重试', 'error');
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return minutes + '分钟前';
+            if (hours < 24) return hours + '小时前';
+            if (days < 7) return days + '天前';
+            
+            return date.toLocaleDateString();
+        }
+
+        // 通用消息提示
+        function showMessage(message, type) {
+            // 创建提示框
+            const alertDiv = document.createElement('div');
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 10001;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            // 设置颜色
+            switch(type) {
+                case 'success':
+                    alertDiv.style.backgroundColor = '#51cf66';
+                    break;
+                case 'error':
+                    alertDiv.style.backgroundColor = '#ff6b6b';
+                    break;
+                case 'warning':
+                    alertDiv.style.backgroundColor = '#ffd43b';
+                    alertDiv.style.color = '#333';
+                    break;
+                default:
+                    alertDiv.style.backgroundColor = '#667eea';
+            }
+            
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+            
+            // 自动移除
+            setTimeout(() => {
+                alertDiv.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(alertDiv)) {
+                        document.body.removeChild(alertDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加一些交互动画
+            const cards = document.querySelectorAll('.detail-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s, transform 0.5s';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            });
+            
+            // 加载评论和收藏状态
+            loadComments();
+            checkFavoriteStatus();
+            
+            // 初始化图片悬停预览功能
+            initImageHoverPreview();
+            
+            // 恢复之前的滚动位置
+            const commentsState = StateManager.getCommentsState();
+            if (commentsState.lastScrollPosition && commentsState.lastScrollPosition > 0) {
+                // 使用requestAnimationFrame确保页面完全加载后再滚动
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, commentsState.lastScrollPosition);
+                });
+            }
+        });
+    </script>
+        
+        <!-- 滚动到顶部按钮 -->
+        <button class="scroll-top" onclick="scrollToTop()" title="滚动到顶部">↑</button>
+        
+        <!-- 加载进度条 -->
+        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+        
+        <script>
+        // 图片错误处理函数
+        function handleImageError(img) {
+            console.warn('图片加载失败:', img.src);
+            img.style.display = 'none';
+            const placeholder = img.nextElementSibling;
+            if (placeholder && placeholder.classList.contains('image-placeholder')) {
+                placeholder.style.display = 'block';
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+                // 初始化评论区域动画
+                const commentSection = document.querySelector('.comment-section');
+                if (commentSection) {
+                    commentSection.style.animationDelay = '0.2s';
+                }
+                
+                // 初始化滚动监听
+                initScrollListener();
+                initKeyboardShortcuts();
+            });
+            
+            function initScrollListener() {
+                const scrollTopBtn = document.querySelector('.scroll-top');
+                const progressBar = document.getElementById('progress-bar');
+                
+                window.addEventListener('scroll', function() {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const windowHeight = window.innerHeight;
+                    const documentHeight = document.documentElement.scrollHeight;
+                    
+                    // 显示/隐藏滚动到顶部按钮
+                    if (scrollTop > 300) {
+                        scrollTopBtn.style.display = 'block';
+                    } else {
+                        scrollTopBtn.style.display = 'none';
+                    }
+                    
+                    // 更新进度条
+                    const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+                    progressBar.style.width = Math.min(scrollPercent, 100) + '%';
+                });
+            }
+            
+            function scrollToTop() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }
+            
+            function initKeyboardShortcuts() {
+                document.addEventListener('keydown', function(e) {
+                    // Ctrl/Cmd + Enter 快速提交评论
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        const commentContent = document.getElementById('comment-content');
+                        if (document.activeElement === commentContent && commentContent.value.trim()) {
+                            submitComment();
+                        }
+                    }
+                    
+                    // ESC 键清空评论内容
+                    if (e.key === 'Escape') {
+                        const commentContent = document.getElementById('comment-content');
+                        if (document.activeElement === commentContent) {
+                            commentContent.value = '';
+                        }
+                    }
+                });
+            }
+            
+            function showLoadingProgress() {
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressBar.style.width = '0%';
+                }, 500);
+            }
+        </script>
+    </body>
+</html>
+
+

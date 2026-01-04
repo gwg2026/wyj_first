@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: '校园失物招领系统'">校园失物招领系统</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div th:fragment="navbar">
+        <div class="header">
+            <h1>🏫 校园失物招领系统</h1>
+        </div>
+        <div class="nav">
+            <a th:href="@{/lost/list}" th:classappend="${activePage == 'list' ? 'active' : ''}">全部</a>
+            <a th:href="@{/lost/list/1}" th:classappend="${activePage == 'lost' ? 'active' : ''}">失物</a>
+            <a th:href="@{/lost/list/2}" th:classappend="${activePage == 'found' ? 'active' : ''}">拾物</a>
+            <a th:href="@{/lost/latest}" th:classappend="${activePage == 'latest' ? 'active' : ''}">最新</a>
+            <a th:href="@{/lost/hot}" th:classappend="${activePage == 'hot' ? 'active' : ''}">最热</a>
+            <a th:href="@{/lost/publish}" th:classappend="${activePage == 'publish' ? 'active' : ''}">发布信息</a>
+            <a th:href="@{/lost/my}" th:classappend="${activePage == 'my' ? 'active' : ''}">我的发布</a>
+            <a th:if="${session.user != null}" th:href="@{/user/logout}">退出</a>
+            <a th:unless="${session.user != null}" th:href="@{/user/login}" th:classappend="${activePage == 'login' ? 'active' : ''}">登录</a>
+            <a th:unless="${session.user != null}" th:href="@{/user/register}" th:classappend="${activePage == 'register' ? 'active' : ''}">注册</a>
+        </div>
+    </div>
+</body>
+</html>

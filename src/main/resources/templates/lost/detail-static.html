@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失物详情 - 静态测试版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .detail-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .detail-image { width: 100%; max-width: 600px; border-radius: 10px; margin: 20px 0; }
+        .detail-info { margin: 15px 0; }
+        .detail-label { font-weight: bold; color: #666; width: 100px; display: inline-block; }
+        .detail-value { color: #333; }
+        .type-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; margin-right: 10px; color: white; }
+        .type-lost { background: #ff6b6b; }
+        .type-found { background: #4ecdc4; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; }
+        .status-found { background: #51cf66; }
+        .status-lost { background: #ffd43b; color: #333; }
+        .contact-info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .actions { margin-top: 30px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #51cf66; color: white; }
+        .btn-danger { background: #ff6b6b; color: white; }
+        .btn-warning { background: #ffd43b; color: #333; }
+        .btn-info { background: #74c0fc; color: white; }
+        .comment-section { animation: fadeInUp 0.6s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .scroll-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: #667eea; color: white; border: none; border-radius: 50%; cursor: pointer; display: none; transition: all 0.3s ease; z-index: 1000; }
+        .scroll-top:hover { background: #5a6fd8; transform: translateY(-3px); }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #667eea; z-index: 9999; transition: width 0.3s ease; }
+        .btn-like:hover, .btn-reply:hover { opacity: 0.8; }
+        .comment-item:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .detail-image:hover { filter: brightness(1.05); transform: scale(1.01); transition: all 0.3s ease; cursor: zoom-in; }
+        .related-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .comment-section { animation: slideUp 0.5s ease-out; }
+        
+        .comments-container { margin-top: 30px; }
+        .comment-item { background: #f8f9fa; border-radius: 10px; padding: 20px; margin: 15px 0; border-left: 4px solid #667eea; }
+        .comment-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .comment-avatar { width: 32px; height: 32px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px; }
+        .comment-author { font-weight: bold; color: #333; }
+        .comment-time { color: #999; font-size: 12px; margin-left: auto; }
+        .comment-content { color: #333; line-height: 1.6; margin-bottom: 10px; }
+        .comment-actions { display: flex; gap: 10px; }
+        .btn-like, .btn-reply { background: none; border: none; color: #667eea; cursor: pointer; padding: 5px; font-size: 12px; }
+        .reply-section { margin-top: 15px; padding-left: 20px; border-left: 2px solid #e9ecef; }
+        .reply-item { background: #fff; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid #e9ecef; }
+        .reply-author { font-weight: bold; color: #667eea; margin-right: 5px; }
+        .reply-content { color: #333; }
+        .reply-time { color: #999; font-size: 11px; }
+        .reply-form { margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .reply-content-input { width: 100%; height: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical; }
+        .image-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .image-container {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            border-radius: 8px;
+        }
+        .preview-overlay {
+            position: fixed;
+            z-index: 9999;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            pointer-events: none;
+            display: none;
+        }
+        .preview-overlay img {
+            max-width: 300px;
+            max-height: 300px;
+            display: block;
+            border-radius: 6px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <a href="list.html">← 返回列表</a>
+            <h1 style="margin-top: 10px;">失物详情</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="detail-card">
+            <div class="detail-title">
+                <span>丢失的钱包</span>
+                <span class="type-badge type-lost">失物</span>
+                <span class="status-badge status-lost">未找到</span>
+            </div>
+
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veS4rTwvdGV4dD48L3N2Zz4=" 
+                 class="detail-image" alt="图片" data-item-id="1">
+            
+            <div class="detail-info">
+                <span class="detail-label">分类：</span>
+                <span class="detail-value">证件类</span>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">地点：</span>
+                <span class="detail-value">学校图书馆</span>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">时间：</span>
+                <span class="detail-value">2024-12-27 14:30</span>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">描述：</span>
+                <div class="detail-value" style="white-space: pre-wrap;">
+黑色皮质钱包，里面有身份证、学生证和多张银行卡。如果有拾到者请联系我，必有重谢！
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <h3 style="margin-bottom: 15px;">联系方式</h3>
+                <div class="detail-info">
+                    <span class="detail-label">电话：</span>
+                    <span class="detail-value">138****5678</span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">QQ：</span>
+                    <span class="detail-value">123456789</span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">微信：</span>
+                    <span class="detail-value">wechat123</span>
+                </div>
+                <div class="detail-info">
+                    <span class="detail-label">发布者：</span>
+                    <span class="detail-value">张三（2021001）</span>
+                </div>
+            </div>
+            
+            <div class="detail-info">
+                <span class="detail-label">发布时间：</span>
+                <span class="detail-value">2024-12-27 15:00</span>
+                <span style="margin-left: 20px;">浏览次数：15</span>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-success" onclick="updateStatus(getItemId(), 1)">标记为已找到</button>
+                <button class="btn btn-danger" onclick="deleteItem(getItemId())">删除</button>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-primary" onclick="toggleFavorite()">
+                    <span id="favorite-text">⭐ 收藏</span>
+                </button>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-info" onclick="downloadImage()">下载图片</button>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-warning" onclick="reportItem()">举报</button>
+            </div>
+            
+            <div class="comments-container">
+                <h3>评论 (2)</h3>
+                
+                <div class="comment-item" id="comment-1">
+                    <div class="comment-header">
+                        <div class="comment-avatar">李</div>
+                        <div class="comment-author">李四</div>
+                        <div class="comment-time">2024-12-27 16:30</div>
+                    </div>
+                    <div class="comment-content">
+                        我昨天在图书馆也看到一个类似的钱包，已经交给前台了，你可以去问问。
+                    </div>
+                    <div class="comment-actions">
+                        <button class="btn-like" onclick="likeComment(1)">👍 0</button>
+                        <button class="btn-reply" onclick="showReplyForm(1)">回复</button>
+                    </div>
+                    <div class="reply-section" id="replies-1">
+                        <div class="reply-item">
+                            <span class="reply-author">张三：</span>
+                            <span class="reply-content">谢谢提醒！我马上去问一下。</span>
+                            <div class="reply-time">2024-12-27 16:35</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comment-item" id="comment-2">
+                    <div class="comment-header">
+                        <div class="comment-avatar">王</div>
+                        <div class="comment-author">王五</div>
+                        <div class="comment-time">2024-12-27 17:15</div>
+                    </div>
+                    <div class="comment-content">
+                        希望能找到！钱包丢了一定很着急。
+                    </div>
+                    <div class="comment-actions">
+                        <button class="btn-like" onclick="likeComment(2)">👍 0</button>
+                        <button class="btn-reply" onclick="showReplyForm(2)">回复</button>
+                    </div>
+                </div>
+                
+                <div class="comment-form">
+                    <textarea id="comment-content" placeholder="写下你的评论..." 
+                              style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                    <button class="btn btn-primary" onclick="submitComment()" style="margin-top: 10px;">发表评论</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="scroll-top" onclick="scrollToTop()" id="scroll-top">↑</button>
+    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+
+    <script>
+        // 获取itemId的函数，支持动态获取
+        function getItemId() {
+            // 尝试从data属性获取
+            const element = document.querySelector('[data-item-id]');
+            if (element) {
+                return element.getAttribute('data-item-id');
+            }
+            // 如果没有找到，返回默认值（用于静态测试）
+            return '1';
+        }
+        
+        // 图片放大功能
+        function initImageEnlargement() {
+            const detailImage = document.querySelector('.detail-image');
+            if (!detailImage) return;
+            
+            detailImage.addEventListener('click', function() {
+                showImageOverlay(this.src, this.alt);
+            });
+        }
+        
+        function showImageOverlay(imageSrc, imageAlt) {
+            const overlay = document.createElement('div');
+            overlay.className = 'image-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease-in;
+            `;
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container';
+            imgContainer.style.cssText = `
+                position: relative;
+                max-width: 95vw;
+                max-height: 95vh;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            img.alt = imageAlt;
+            img.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                display: block;
+                border-radius: 8px;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '×';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: -40px;
+                right: 0;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+                transition: all 0.2s ease;
+            `;
+            
+            closeBtn.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(255,255,255,0.3)';
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            closeBtn.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255,255,255,0.2)';
+                this.style.transform = 'scale(1)';
+            });
+            
+            closeBtn.onclick = function() {
+                overlay.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                }, 300);
+            };
+            
+            const imgInfo = document.createElement('div');
+            imgInfo.style.cssText = `
+                position: absolute;
+                bottom: -40px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: white;
+                font-size: 14px;
+                text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            `;
+            
+            imgInfo.innerHTML = `
+                <div>点击图片外区域或按 ESC 键关闭</div>
+            `;
+            
+            // 添加鼠标滚轮缩放功能
+            let scale = 1;
+            img.style.transform = `scale(${scale})`;
+            
+            overlay.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    // 放大
+                    scale = Math.min(scale + 0.1, 3);
+                } else {
+                    // 缩小
+                    scale = Math.max(scale - 0.1, 0.5);
+                }
+                img.style.transform = `scale(${scale})`;
+            });
+            
+            // 添加键盘事件
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeBtn.onclick();
+                }
+            });
+            
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(closeBtn);
+            imgContainer.appendChild(imgInfo);
+            overlay.appendChild(imgContainer);
+            document.body.appendChild(overlay);
+            
+            // 点击图片外部关闭
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeBtn.onclick();
+                }
+            });
+        }
+        
+        // 图片悬停预览功能
+        function initImageHoverPreview() {
+            const detailImage = document.querySelector('.detail-image');
+            if (!detailImage) return;
+            
+            let previewOverlay = null;
+            let isMouseOverPreview = false;
+            
+            // 创建预览元素
+            function createPreviewOverlay() {
+                if (previewOverlay) return previewOverlay;
+                
+                previewOverlay = document.createElement('div');
+                previewOverlay.className = 'preview-overlay';
+                previewOverlay.style.cssText = `
+                    position: fixed;
+                    z-index: 9999;
+                    border: 2px solid #667eea;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    pointer-events: none;
+                    display: none;
+                `;
+                
+                const previewImg = document.createElement('img');
+                previewImg.src = detailImage.src;
+                previewImg.style.cssText = `
+                    max-width: 300px;
+                    max-height: 300px;
+                    display: block;
+                    border-radius: 6px;
+                `;
+                
+                previewOverlay.appendChild(previewImg);
+                document.body.appendChild(previewOverlay);
+                
+                // 鼠标事件监听
+                previewOverlay.addEventListener('mouseenter', () => {
+                    isMouseOverPreview = true;
+                });
+                
+                previewOverlay.addEventListener('mouseleave', () => {
+                    isMouseOverPreview = false;
+                    previewOverlay.style.display = 'none';
+                });
+                
+                return previewOverlay;
+            }
+            
+            // 鼠标进入图片
+            detailImage.addEventListener('mouseenter', function(e) {
+                const preview = createPreviewOverlay();
+                
+                // 计算预览位置，避免超出屏幕
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                const previewWidth = 300;
+                const previewHeight = 300;
+                
+                let previewX = mouseX + 10;
+                let previewY = mouseY + 10;
+                
+                // 检查右边界
+                if (previewX + previewWidth > window.innerWidth) {
+                    previewX = mouseX - previewWidth - 10;
+                }
+                
+                // 检查下边界
+                if (previewY + previewHeight > window.innerHeight) {
+                    previewY = mouseY - previewHeight - 10;
+                }
+                
+                preview.style.left = previewX + 'px';
+                preview.style.top = previewY + 'px';
+                preview.style.display = 'block';
+            });
+            
+            // 鼠标离开图片
+            detailImage.addEventListener('mouseleave', function() {
+                if (previewOverlay && !isMouseOverPreview) {
+                    previewOverlay.style.display = 'none';
+                }
+            });
+            
+            // 确保预览元素被移除
+            window.addEventListener('beforeunload', function() {
+                if (previewOverlay && document.body.contains(previewOverlay)) {
+                    document.body.removeChild(previewOverlay);
+                }
+            });
+        }
+        
+        // 收藏功能
+        let isFavorited = false;
+        let isLoadingFavorite = false;
+        
+        function toggleFavorite() {
+            if (isLoadingFavorite) return;
+            isLoadingFavorite = true;
+            
+            // 更新按钮状态显示加载中
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span id="favorite-text">处理中...</span>';
+            btn.disabled = true;
+            
+            // 模拟API调用
+            setTimeout(() => {
+                isLoadingFavorite = false;
+                btn.disabled = false;
+                
+                isFavorited = !isFavorited;
+                updateFavoriteButton();
+                showMessage(isFavorited ? '收藏成功' : '取消收藏', 'success');
+            }, 1000);
+        }
+        
+        function updateFavoriteButton() {
+            const btn = document.querySelector('[onclick="toggleFavorite()"]');
+            const text = document.getElementById('favorite-text');
+            
+            if (isFavorited) {
+                text.textContent = '⭐ 已收藏';
+                btn.className = 'btn btn-success';
+            } else {
+                text.textContent = '⭐ 收藏';
+                btn.className = 'btn btn-primary';
+            }
+        }
+        
+        function showMessage(message, type) {
+            // 简单的消息提示
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#51cf66' : '#ff6b6b'};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 10001;
+                animation: slideUp 0.3s ease-out;
+            `;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(messageDiv)) {
+                        document.body.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 2000);
+        }
+        
+        // 评论相关功能
+        function submitComment() {
+            const content = document.getElementById('comment-content').value.trim();
+            if (!content) {
+                showMessage('请输入评论内容', 'error');
+                return;
+            }
+            
+            // 模拟提交
+            setTimeout(() => {
+                document.getElementById('comment-content').value = '';
+                showMessage('评论发表成功', 'success');
+            }, 1000);
+        }
+        
+        function likeComment(commentId) {
+            // 模拟点赞
+            showMessage('点赞成功', 'success');
+        }
+        
+        function showReplyForm(commentId) {
+            const commentElement = document.getElementById('comment-' + commentId);
+            let replyForm = commentElement.querySelector('.reply-form');
+            
+            if (!replyForm) {
+                replyForm = document.createElement('div');
+                replyForm.className = 'reply-form';
+                replyForm.innerHTML = `
+                    <textarea class="reply-content-input" placeholder="写下你的回复..."></textarea>
+                    <button class="btn btn-primary" onclick="submitReply(${commentId})" style="margin-top: 10px;">回复</button>
+                `;
+                commentElement.appendChild(replyForm);
+            }
+            
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function submitReply(commentId) {
+            const replyContent = document.querySelector('.reply-content-input').value.trim();
+            if (!replyContent) {
+                showMessage('请输入回复内容', 'error');
+                return;
+            }
+            
+            // 模拟提交
+            setTimeout(() => {
+                showMessage('回复发表成功', 'success');
+                document.querySelector('.reply-form').style.display = 'none';
+            }, 1000);
+        }
+        
+        // 其他功能函数（模拟）
+        function updateStatus(itemId, status) {
+            showMessage('状态更新成功', 'success');
+        }
+        
+        function deleteItem(itemId) {
+            if (confirm('确定要删除这个失物吗？')) {
+                showMessage('删除成功', 'success');
+            }
+        }
+        
+        function downloadImage() {
+            const imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veS4rTwvdGV4dD48L3N2Zz4=';
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = '失物图片_' + getItemId() + '.jpg';
+            link.click();
+        }
+        
+        function reportItem() {
+            const reason = prompt('请输入举报原因：');
+            if (reason && reason.trim()) {
+                showMessage('举报已提交，我们会尽快处理', 'success');
+            }
+        }
+        
+        // 滚动到顶部功能
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 监听滚动事件
+        window.addEventListener('scroll', function() {
+            const scrollTopBtn = document.getElementById('scroll-top');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // 显示/隐藏回到顶部按钮
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.style.display = 'block';
+            } else {
+                scrollTopBtn.style.display = 'none';
+            }
+            
+            // 更新进度条
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollTop = window.pageYOffset;
+            const progress = (scrollTop / scrollHeight) * 100;
+            progressBar.style.width = progress + '%';
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initImageEnlargement();
+            initImageHoverPreview();
+            updateFavoriteButton();
+            
+            // 添加页面加载动画
+            const container = document.querySelector('.container');
+            if (container) {
+                container.style.opacity = '0';
+                container.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    container.style.transition = 'all 0.5s ease-out';
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0)';
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

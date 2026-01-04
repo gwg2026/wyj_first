@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园失物招领系统</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div th:replace="fragments/navbar :: navbar" th:with="activePage='list'"></div>
+    <div class="container">
+        <div class="search-box">
+            <form class="search-form" th:action="@{/lost/search}" method="get">
+                <input type="text" name="keyword" placeholder="输入关键字搜索..." th:value="${keyword}">
+                <select name="categoryId">
+                    <option value="">全部分类</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" 
+                            th:selected="${categoryId == cat.id}"></option>
+                </select>
+                <button type="submit">搜索</button>
+            </form>
+        </div>
+        <div class="items" th:if="${items != null and !items.isEmpty()}">
+            <div class="item-card" th:each="item : ${items}">
+                <div th:if="${item.imageUrl != null}" class="item-image-container">
+                    <img th:src="@{${item.imageUrl}}" class="item-image" alt="图片" 
+                         onerror="handleImageError(this)" th:title="${item.title}">
+                </div>
+                <div th:if="${item.imageUrl == null}" class="item-image-placeholder" 
+                     style="background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; height: 200px;">
+                    <div style="text-align: center; color: #999;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                        <div>暂无图片</div>
+                    </div>
+                </div>
+                <div class="item-content">
+                    <div class="item-title">
+                        <a th:href="@{/lost/detail/{id}(id=${item.id})}" th:text="${item.title}"></a>
+                        <span class="item-status" th:classappend="${item.status == 1 ? 'status-found' : 'status-lost'}"
+                              th:text="${item.status == 1 ? '已找到' : '未找到'}"></span>
+                    </div>
+                    <div class="item-meta">
+                        <span class="item-type" th:classappend="${item.type == 1 ? 'type-lost' : 'type-found'}"
+                              th:text="${item.type == 1 ? '失物' : '拾物'}"></span>
+                        <span th:text="${item.category != null ? item.category.name : '未分类'}"></span>
+                    </div>
+                    <div class="item-meta" th:if="${item.lostLocation != null}">📍 <span th:text="${item.lostLocation}"></span></div>
+                    <div class="item-meta">👤 <span th:text="${item.user != null ? item.user.realName : '未知'}"></span></div>
+                    <div class="item-meta">👁️ 浏览 <span th:text="${item.viewCount}"></span> 次 | 
+                         <span th:text="${#dates.format(item.createTime, 'yyyy-MM-dd HH:mm')}"></span></div>
+                </div>
+            </div>
+        </div>
+        <div class="empty" th:if="${items == null or items.isEmpty()}">
+            <p>暂无失物信息</p>
+        </div>
+    </div>
+    
+    <script>
+        // 图片错误处理函数
+        function handleImageError(img) {
+            console.warn('图片加载失败:', img.src);
+            img.style.display = 'none';
+            
+            // 创建一个占位符
+            const placeholder = document.createElement('div');
+            placeholder.style.cssText = `
+                background: #f8f9fa;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 200px;
+                border: 2px dashed #ddd;
+            `;
+            
+            placeholder.innerHTML = `
+                <div style="text-align: center; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                    <div>图片加载失败</div>
+                </div>
+            `;
+            
+            // 替换图片为占位符
+            img.parentNode.replaceChild(placeholder, img);
+        }
+    </script>
+</body>
+</html>
+

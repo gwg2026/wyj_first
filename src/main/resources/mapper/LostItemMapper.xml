@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nxu.dao.LostItemMapper">
+
+    <resultMap id="lostItemResultMap" type="LostItem">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="lostLocation" column="lost_location"/>
+        <result property="lostTime" column="lost_time"/>
+        <result property="contactInfo" column="contact_info"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="status" column="status"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联用户 -->
+        <association property="user" javaType="User">
+            <id property="id" column="user_id"/>
+            <result property="username" column="username"/>
+            <result property="realName" column="real_name"/>
+            <result property="studentNo" column="student_no"/>
+            <result property="phone" column="phone"/>
+            <result property="qq" column="qq"/>
+            <result property="wechat" column="wechat"/>
+            <result property="email" column="email"/>
+        </association>
+        <!-- 关联分类 -->
+        <association property="category" javaType="Category">
+            <id property="id" column="category_id"/>
+            <result property="name" column="category_name"/>
+        </association>
+    </resultMap>
+
+    <!-- 插入失物信息 -->
+    <insert id="insert" parameterType="LostItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO lost_item (user_id, category_id, type, title, description, lost_location, lost_time, contact_info, image_url, status, view_count)
+        VALUES (#{userId}, #{categoryId}, #{type}, #{title}, #{description}, #{lostLocation}, #{lostTime}, #{contactInfo}, #{imageUrl}, #{status}, #{viewCount})
+    </insert>
+
+    <!-- 根据ID查询失物信息（包含用户和分类信息） -->
+    <select id="findById" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.id = #{id}
+    </select>
+
+    <!-- 查询所有失物信息 -->
+    <select id="findAll" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 根据类型查询 -->
+    <select id="findByType" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.type = #{type}
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 查询最新的失物信息 -->
+    <select id="findLatest" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        ORDER BY li.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询最热的失物信息 -->
+    <select id="findHot" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        ORDER BY li.view_count DESC, li.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据分类查询 -->
+    <select id="findByCategory" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.category_id = #{categoryId}
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 搜索失物信息（按关键字） -->
+    <select id="search" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.title LIKE CONCAT('%', #{keyword}, '%')
+           OR li.description LIKE CONCAT('%', #{keyword}, '%')
+           OR li.lost_location LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 根据关键字和分类搜索 -->
+    <select id="searchByKeywordAndCategory" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.category_id = #{categoryId}
+          AND (li.title LIKE CONCAT('%', #{keyword}, '%')
+           OR li.description LIKE CONCAT('%', #{keyword}, '%')
+           OR li.lost_location LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 更新失物信息 -->
+    <update id="update" parameterType="LostItem">
+        UPDATE lost_item
+        SET category_id = #{categoryId},
+            type = #{type},
+            title = #{title},
+            description = #{description},
+            lost_location = #{lostLocation},
+            lost_time = #{lostTime},
+            contact_info = #{contactInfo},
+            image_url = #{imageUrl},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE lost_item
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加浏览次数 -->
+    <update id="increaseViewCount">
+        UPDATE lost_item
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据用户ID查询 -->
+    <select id="findByUserId" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.user_id = #{userId}
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 根据状态查询 -->
+    <select id="findByStatus" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.status = #{status}
+        ORDER BY li.create_time DESC
+    </select>
+
+    <!-- 删除失物信息 -->
+    <delete id="deleteById">
+        DELETE FROM lost_item WHERE id = #{id}
+    </delete>
+
+    <!-- 查询相关推荐物品 -->
+    <select id="findRelated" resultMap="lostItemResultMap">
+        SELECT li.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email,
+               c.name as category_name
+        FROM lost_item li
+        LEFT JOIN user u ON li.user_id = u.id
+        LEFT JOIN category c ON li.category_id = c.id
+        WHERE li.id != #{excludeId}
+        ORDER BY 
+            CASE 
+                WHEN li.category_id = #{categoryId} THEN 1
+                WHEN li.type = #{type} THEN 2
+                ELSE 3
+            END,
+            li.create_time DESC
+        LIMIT 6
+    </select>
+
+</mapper>
+

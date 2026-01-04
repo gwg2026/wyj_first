@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nxu.dao.CommentReplyMapper">
+
+    <!-- 评论回复实体类映射 -->
+    <resultMap type="nxu.entity.CommentReply" id="commentReplyResultMap">
+        <id property="id" column="id"/>
+        <result property="commentId" column="comment_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <association property="user" javaType="nxu.entity.User">
+            <id property="id" column="user_id"/>
+            <result property="username" column="username"/>
+            <result property="realName" column="real_name"/>
+            <result property="studentNo" column="student_no"/>
+            <result property="phone" column="phone"/>
+            <result property="qq" column="qq"/>
+            <result property="wechat" column="wechat"/>
+            <result property="email" column="email"/>
+        </association>
+    </resultMap>
+
+    <!-- 插入评论回复 -->
+    <insert id="insert" parameterType="nxu.entity.CommentReply">
+        INSERT INTO comment_reply (comment_id, user_id, content, create_time)
+        VALUES (#{commentId}, #{userId}, #{content}, NOW())
+    </insert>
+
+    <!-- 根据评论ID查询回复列表（包含用户信息，按创建时间倒序） -->
+    <select id="findByCommentId" resultMap="commentReplyResultMap">
+        SELECT r.*,
+               u.username, u.real_name, u.student_no, u.phone, u.qq, u.wechat, u.email
+        FROM comment_reply r
+        LEFT JOIN user u ON r.user_id = u.id
+        WHERE r.comment_id = #{commentId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 删除回复 -->
+    <delete id="deleteById">
+        DELETE FROM comment_reply WHERE id = #{id}
+    </delete>
+
+    <!-- 根据评论ID删除回复 -->
+    <delete id="deleteByCommentId">
+        DELETE FROM comment_reply WHERE comment_id = #{commentId}
+    </delete>
+
+    <!-- 统计回复总数 -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM comment_reply
+    </select>
+
+    <!-- 根据评论ID统计回复数量 -->
+    <select id="countByCommentId" resultType="int">
+        SELECT COUNT(*) FROM comment_reply WHERE comment_id = #{commentId}
+    </select>
+</mapper>

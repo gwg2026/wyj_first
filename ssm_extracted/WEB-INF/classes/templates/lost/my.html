@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的发布</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .publish-form {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        .publish-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .publish-btn:hover {
+            opacity: 0.9;
+        }
+        .toggle-form-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .toggle-form-btn:hover {
+            background: #218838;
+        }
+        .form-container {
+            display: none;
+        }
+        .form-container.show {
+            display: block;
+        }
+        .item-actions {
+            margin-top: 10px;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/navbar :: navbar" th:with="activePage='my'"></div>
+    <div class="container">
+        <div class="header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h2>我的发布</h2>
+        </div>
+        
+        <!-- 错误信息显示 -->
+        <div th:if="${error}" class="alert alert-danger" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+            <span th:text="${error}"></span>
+        </div>
+        
+        <!-- 发布失物表单 -->
+        <div class="publish-form" th:if="${!needLogin}">
+            <button type="button" class="toggle-form-btn" onclick="togglePublishForm()">
+                ➕ 发布新的失物信息
+            </button>
+            
+            <div id="publishFormContainer" class="form-container">
+                <h3 style="margin-bottom: 20px; color: #333;">发布失物信息</h3>
+                <form th:action="@{/lost/publish}" method="post" enctype="multipart/form-data" id="publishForm">
+                    <div class="form-group">
+                        <label for="type">类型：</label>
+                        <select id="type" name="type" required>
+                            <option value="">请选择类型</option>
+                            <option value="1">失物</option>
+                            <option value="2">拾物</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryId">分类：</label>
+                        <select id="categoryId" name="categoryId" required>
+                            <option value="">请选择分类</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="title">标题：</label>
+                        <input type="text" id="title" name="title" placeholder="请输入物品标题" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">详细描述：</label>
+                        <textarea id="description" name="description" placeholder="请详细描述物品的特征、丢失/拾到的情况等"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lostLocation">地点：</label>
+                        <input type="text" id="lostLocation" name="lostLocation" placeholder="请输入丢失或拾到的具体地点">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lostTimeStr">时间：</label>
+                        <input type="datetime-local" id="lostTimeStr" name="lostTimeStr">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactInfo">联系方式：</label>
+                        <input type="text" id="contactInfo" name="contactInfo" placeholder="请输入联系电话或其他联系方式">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imageFile">图片：</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                        <small style="color: #666;">支持jpg、png等格式，建议图片大小不超过2MB</small>
+                    </div>
+                    
+                    <button type="submit" class="publish-btn">发布信息</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 我的发布列表 -->
+        <div class="items" th:if="${items != null and !items.isEmpty()}">
+            <h3 style="margin-bottom: 20px; color: #333;">我的发布记录</h3>
+            <div class="item-card" th:each="item : ${items}">
+                <img th:if="${item.imageUrl != null}" th:src="@{${item.imageUrl}}" class="item-image" alt="图片">
+                <div class="item-content">
+                    <div class="item-title">
+                        <a th:href="@{/lost/detail/{id}(id=${item.id})}" th:text="${item.title}"></a>
+                        <span class="status-badge" th:classappend="${item.status == 1 ? 'status-found' : 'status-lost'}"
+                              th:text="${item.status == 1 ? '已找到' : '未找到'}"></span>
+                    </div>
+                    <div class="item-meta">
+                        <span class="type-badge" th:classappend="${item.type == 1 ? 'type-lost' : 'type-found'}"
+                              th:text="${item.type == 1 ? '失物' : '拾物'}"></span>
+                        <span th:text="${item.category != null ? item.category.name : '未分类'}"></span>
+                    </div>
+                    <div class="item-meta" th:if="${item.lostLocation != null}">📍 <span th:text="${item.lostLocation}"></span></div>
+                    <div class="item-meta">👁️ 浏览 <span th:text="${item.viewCount}"></span> 次</div>
+                    <div class="item-meta">📅 <span th:text="${#dates.format(item.createTime, 'yyyy-MM-dd HH:mm')}"></span></div>
+                    <div class="item-actions">
+                        <button class="delete-btn" th:onclick="'deleteItem(' + ${item.id} + ')'">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 登录提示 -->
+        <div class="login-prompt" th:if="${needLogin}" style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px;">🔒 需要登录</h3>
+            <p style="margin-bottom: 15px;">请先登录后再查看您的发布记录和发布新的失物信息。</p>
+            <a th:href="${loginUrl}" class="login-btn" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                立即登录
+            </a>
+        </div>
+        
+        <div class="empty" th:if="${!needLogin and (items == null or items.isEmpty())}">
+            <p>您还没有发布任何信息</p>
+            <p style="color: #666; margin-top: 10px;">点击上方的"发布新的失物信息"按钮开始发布吧！</p>
+        </div>
+    </div>
+
+    <script>
+        function togglePublishForm() {
+            const container = document.getElementById('publishFormContainer');
+            container.classList.toggle('show');
+        }
+        
+        function deleteItem(itemId) {
+            if (confirm('确定要删除这条信息吗？删除后无法恢复。')) {
+                fetch('/lost/delete/' + itemId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+            }
+        }
+        
+        // 移除JavaScript表单拦截，让表单正常提交
+        // 表单将通过正常的POST请求提交到后端，后端处理后重定向到/my页面
+    </script>
+</body>
+</html>
+
